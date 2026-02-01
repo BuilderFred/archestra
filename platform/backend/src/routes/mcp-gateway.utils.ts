@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ReadResourceRequestSchema,
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
@@ -171,6 +172,20 @@ export async function createAgentServer(
     }
 
     return { tools: toolsList };
+  });
+
+  server.setRequestHandler(ReadResourceRequestSchema, async ({ params: { uri } }) => {
+    try {
+      logger.info({ agentId, uri }, "MCP gateway read resource request received");
+      const result = await mcpClient.readResource(uri, agentId, tokenAuth);
+      return result;
+    } catch (error) {
+      throw {
+        code: -32603,
+        message: "Resource read failed",
+        data: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
   });
 
   server.setRequestHandler(
